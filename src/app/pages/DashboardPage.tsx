@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState , useEffect } from "react";
 import { Briefcase, ChevronRight, DollarSign, MapPin, Plus, Search } from "lucide-react";
 import { Navbar, StatCard } from "../components/AppShell";
 import { formatSalary, STATUS_CONFIG, type Job, type Status } from "../types";
+import { URL } from "../utils";
+import { useNavigate } from "react-router-dom";
 
 function StatusBadge({ status }: { status: Status }) {
   const cfg = STATUS_CONFIG[status];
@@ -19,22 +21,50 @@ function StatusBadge({ status }: { status: Status }) {
 }
 
 export function DashboardPage({
-  jobs,
   onAddJob,
-  onViewJob,
   onLogout,
 }: {
-  jobs: Job[];
+
   onAddJob: () => void;
-  onViewJob: (id: number) => void;
   onLogout: () => void;
 }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<Status | "All">("All");
+  const [fetchedJobs, setFetchedJobs] = useState<Job[]>([]); 
+  const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
 
   const statuses: (Status | "All")[] = ["All", "Applied", "Screening", "Interview", "Offer", "Rejected"];
+  const fetchJobApplications = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${URL}/applications`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-  const filtered = jobs.filter((job) => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch jobs");
+      }
+      const data = await response.json();
+      console.log("Fetched jobs:", data);
+    
+      setFetchedJobs(data);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    }
+    finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchJobApplications();
+  }, []);
+
+  const filtered = fetchedJobs.filter((job) => {
     const matchSearch =
       job.company.toLowerCase().includes(search.toLowerCase()) ||
       job.role.toLowerCase().includes(search.toLowerCase()) ||
@@ -44,11 +74,14 @@ export function DashboardPage({
   });
 
   const counts = {
-    total: jobs.length,
-    active: jobs.filter((job) => job.status !== "Rejected").length,
-    interviews: jobs.filter((job) => job.status === "Interview").length,
-    offers: jobs.filter((job) => job.status === "Offer").length,
+    total: fetchedJobs.length,
+    active: fetchedJobs.filter((job) => job.status !== "Rejected").length,
+    interviews: fetchedJobs.filter((job) => job.status === "Interview").length,
+    offers: fetchedJobs.filter((job) => job.status === "Offer").length,
   };
+  const handleViewClick = (jobId: number) => {
+    navigate(`/job-detail/${jobId}`);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,7 +143,9 @@ export function DashboardPage({
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-20 text-muted-foreground">Loading applications...</div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p className="text-lg font-medium">No jobs found</p>
@@ -121,7 +156,7 @@ export function DashboardPage({
             {filtered.map((job) => (
               <button
                 key={job.id}
-                onClick={() => onViewJob(job.id)}
+                onClick={() => handleViewClick(job?.user_app_id)}
                 className="w-full text-left bg-card border border-border rounded-xl p-5 hover:border-primary/40 hover:bg-card/80 transition-all duration-150 group"
               >
                 <div className="flex items-start justify-between gap-4">

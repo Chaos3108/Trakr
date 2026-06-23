@@ -1,77 +1,91 @@
 import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthPage } from "./pages/AuthPage";
 import { AddJobPage } from "./pages/AddJobPage";
-import { DashboardPage } from "./pages/DashboardPage";
+import { DashboardPage } from "../app/pages/DashboardPage";
 import { JobDetailPage } from "./pages/JobDetailPage";
-import { INITIAL_JOBS, type Job, type Page, type Status } from "./types";
+
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+    const isAuthenticated = !!localStorage.getItem("token");
+    return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+function AppContent() {
+    const navigate = useNavigate();
+    const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+
+
+
+
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        navigate("/login");
+    };
+
+ 
+    return (
+        <Routes>
+            <Route
+                path="/login"
+                element={
+                    <AuthPage
+                        mode={authMode}
+                        onSwitch={() => setAuthMode(authMode === "login" ? "signup" : "login")}
+                    />
+                }
+            />
+            <Route
+                path="/add-job"
+                element={
+                    <ProtectedRoute>
+                        <AddJobPage
+                        
+                            onCancel={() => navigate("/dashboard")}
+                            onLogout={handleLogout}
+                        />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/job-detail/:id"
+                element={
+                    <ProtectedRoute>
+                        
+                            <JobDetailPage
+                                
+                                onBack={() => navigate("/dashboard")}
+                            
+                                onLogout={handleLogout}
+                            />
+                        
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/dashboard"
+                element={
+                    <ProtectedRoute>
+                        <DashboardPage
+                            
+                            onAddJob={() => navigate("/add-job")}
+                           
+                            onLogout={handleLogout}
+                        />
+                    </ProtectedRoute>
+                }
+            />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+    );
+}
 
 export default function App() {
-  const [page, setPage] = useState<Page>("login");
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
-  const [jobs, setJobs] = useState<Job[]>(INITIAL_JOBS);
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
-
-  const selectedJob = jobs.find((job) => job.id === selectedJobId) || null;
-
-  const handleLogin = () => setPage("dashboard");
-
-  const handleLogout = () => {
-    setPage("login");
-    setAuthMode("login");
-    setSelectedJobId(null);
-  };
-
-  const handleAddJob = (data: Omit<Job, "id" | "user_id">) => {
-    const newJob: Job = { ...data, id: Date.now(), user_id: 1 };
-    setJobs((prev) => [newJob, ...prev]);
-    setPage("dashboard");
-  };
-
-  const handleDelete = (id: number) => {
-    setJobs((prev) => prev.filter((job) => job.id !== id));
-    setSelectedJobId(null);
-    setPage("dashboard");
-  };
-
-  const handleStatusChange = (id: number, status: Status) => {
-    setJobs((prev) => prev.map((job) => (job.id === id ? { ...job, status } : job)));
-  };
-
-  if (page === "login" || page === "signup") {
     return (
-      <AuthPage
-        mode={authMode}
-        onSwitch={() => setAuthMode(authMode === "login" ? "signup" : "login")}
-        onLogin={handleLogin}
-      />
+        <Router>
+            <AppContent />
+        </Router>
     );
-  }
-
-  if (page === "add-job") {
-    return <AddJobPage onSave={handleAddJob} onCancel={() => setPage("dashboard")} onLogout={handleLogout} />;
-  }
-
-  if (page === "job-detail" && selectedJob) {
-    return (
-      <JobDetailPage
-        job={selectedJob}
-        onBack={() => setPage("dashboard")}
-        onDelete={handleDelete}
-        onStatusChange={handleStatusChange}
-        onLogout={handleLogout}
-      />
-    );
-  }
-
-  return (
-    <DashboardPage
-      jobs={jobs}
-      onAddJob={() => setPage("add-job")}
-      onViewJob={(id) => {
-        setSelectedJobId(id);
-        setPage("job-detail");
-      }}
-      onLogout={handleLogout}
-    />
-  );
 }

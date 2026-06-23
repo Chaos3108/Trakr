@@ -2,13 +2,14 @@ import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "../components/AppShell";
 import { STATUSES, type Job, type Status } from "../types";
+import axios from "axios";
+import { URL } from "../utils";
+import { useNavigate } from "react-router-dom";
 
 export function AddJobPage({
-  onSave,
   onCancel,
   onLogout,
 }: {
-  onSave: (job: Omit<Job, "id" | "user_id">) => void;
   onCancel: () => void;
   onLogout: () => void;
 }) {
@@ -21,6 +22,7 @@ export function AddJobPage({
     notes: "",
     appliedDate: new Date().toISOString().split("T")[0],
   });
+  const navigate = useNavigate();
 
   const set =
     (field: string) =>
@@ -29,10 +31,20 @@ export function AddJobPage({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...form,
-      salary: Number(form.salary) || 0,
+    try {
+    const submit  = axios.post(`${URL}/applications`, form, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
     });
+    console.log("Job submitted successfully:", submit);
+    navigate("/dashboard");
+  }
+    catch (error) {
+      console.error("Error submitting job:", error);
+    }
+    
   };
 
   const inputClass =

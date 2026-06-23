@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState , useEffect } from "react";
 import { ArrowLeft, Building2, Clock, DollarSign, FileText, MapPin, X } from "lucide-react";
 import { Navbar } from "../components/AppShell";
 import { formatSalary, STATUSES, STATUS_CONFIG, type Job, type Status } from "../types";
+import axios from "axios";
+import { URL } from "../utils";
+import { useParams } from "react-router-dom";
 
 function StatusBadge({ status }: { status: Status }) {
   const cfg = STATUS_CONFIG[status];
@@ -15,25 +18,72 @@ function StatusBadge({ status }: { status: Status }) {
 }
 
 export function JobDetailPage({
-  job,
   onBack,
-  onDelete,
-  onStatusChange,
   onLogout,
 }: {
-  job: Job;
   onBack: () => void;
-  onDelete: (id: number) => void;
-  onStatusChange: (id: number, status: Status) => void;
   onLogout: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<Status>(job.status);
+  const [job, setJob] = useState<Job | null>(null);
+  const { id } = useParams<{ id: string }>();
 
-  const handleStatusSave = () => {
-    onStatusChange(job.id, selectedStatus);
-    setEditing(false);
+  const fetchJobDetails = async (jobId: string) => {
+    try {
+      const response = await axios.get(`${URL}/applications/${jobId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const data = response.data;
+      console.log("Fetched job details:", data);
+      setJob(data);
+    } catch (error) {
+      console.error("Error fetching job details:", error);
+    }
   };
+
+  useEffect(() => {
+    if (id) fetchJobDetails(id);
+  }, [id]);
+
+  const [selectedStatus, setSelectedStatus] = useState<Status>("Applied");
+
+  useEffect(() => {
+    if (job) setSelectedStatus(job.status);
+  }, [job]);
+
+  const handleStatusSave = async () => {
+    if (!job) return;
+    try {
+      // Optionally persist status change to backend
+      await axios.patch(
+        `${URL}/applications/${job.id}`,
+        { status: selectedStatus },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      setJob((prev) => (prev ? { ...prev, status: selectedStatus } : prev));
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    } finally {
+      setEditing(false);
+    }
+  };
+
+  if (!job) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full opacity-10 blur-[100px]" style={{ background: "#7c5cfc" }} />
+        </div>
+        <Navbar onLogout={onLogout} />
+        <main className="max-w-3xl mx-auto px-6 py-10 relative z-10">
+          <p className="text-center text-muted-foreground">Loading application...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,7 +120,7 @@ export function JobDetailPage({
               </div>
             </div>
             <button
-              onClick={() => onDelete(job.id)}
+              onClick={() => console.log("Delete job", job.id)}
               className="text-muted-foreground hover:text-destructive transition-colors p-2 rounded-lg hover:bg-destructive/10"
               title="Delete application"
             >

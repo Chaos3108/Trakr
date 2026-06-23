@@ -12,6 +12,7 @@ export interface Job {
   notes: string;
   user_id: number;
   appliedDate: string;
+  user_app_id: number; 
 }
 
 export type Page = "login" | "signup" | "dashboard" | "add-job" | "job-detail";
@@ -46,63 +47,7 @@ export const STATUS_CONFIG: Record<Status, { color: string; bg: string; icon: Lu
   },
 };
 
-export const INITIAL_JOBS: Job[] = [
-  {
-    id: 1,
-    company: "Google",
-    role: "Frontend Engineer",
-    status: "Applied",
-    location: "Remote",
-    salary: 2500000,
-    notes: "Applied through referral",
-    user_id: 1,
-    appliedDate: "2026-06-10",
-  },
-  {
-    id: 2,
-    company: "Stripe",
-    role: "Senior React Developer",
-    status: "Interview",
-    location: "San Francisco, CA",
-    salary: 2200000,
-    notes: "Second round scheduled for next week. Prep system design.",
-    user_id: 1,
-    appliedDate: "2026-06-05",
-  },
-  {
-    id: 3,
-    company: "Vercel",
-    role: "Staff Engineer",
-    status: "Screening",
-    location: "Remote",
-    salary: 2800000,
-    notes: "Recruiter reached out on LinkedIn. Promising team culture.",
-    user_id: 1,
-    appliedDate: "2026-06-14",
-  },
-  {
-    id: 4,
-    company: "Linear",
-    role: "Product Engineer",
-    status: "Offer",
-    location: "Remote",
-    salary: 1900000,
-    notes: "Offer received! Equity vesting 4 years. Negotiate for sign-on.",
-    user_id: 1,
-    appliedDate: "2026-05-28",
-  },
-  {
-    id: 5,
-    company: "Figma",
-    role: "UI Engineer",
-    status: "Rejected",
-    location: "New York, NY",
-    salary: 2100000,
-    notes: "Passed technical screen but rejected after final loop.",
-    user_id: 1,
-    appliedDate: "2026-05-20",
-  },
-];
+
 
 export function formatSalary(amount: number): string {
   if (amount >= 100000) return `$${(amount / 100000).toFixed(1)}L`;
