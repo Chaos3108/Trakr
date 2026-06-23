@@ -4,7 +4,7 @@ import { AuthPage } from "./pages/AuthPage";
 import { AddJobPage } from "./pages/AddJobPage";
 import { DashboardPage } from "../app/pages/DashboardPage";
 import { JobDetailPage } from "./pages/JobDetailPage";
-
+import { Analytics } from "@vercel/analytics/vue"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const isAuthenticated = !!localStorage.getItem("token");
@@ -86,6 +86,7 @@ export default function App() {
     return (
         <Router>
             <AppContent />
+            <Analytics />
         </Router>
     );
 }
