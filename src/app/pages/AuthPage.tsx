@@ -32,6 +32,20 @@ export function AuthPage({
         }
     };
 
+    const handleSignup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post(`${URL}/auth/signup`, {
+                name,
+                email,
+                password,
+            });
+            console.log("Login successful:", response.data);
+            navigate("/login");
+        } catch (error) {
+            alert(`Signup failed:", ${error}`);
+        }
+    };
 
 
     return (
@@ -61,7 +75,7 @@ export function AuthPage({
                         {mode === "login" ? "Sign in to manage your job applications" : "Start tracking your job search today"}
                     </p>
 
-                    <form onSubmit={handleLogin} className="space-y-4">
+                    <form onSubmit={handleSignup} className="space-y-4">
                         {mode === "signup" && (
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1.5">Full name</label>
