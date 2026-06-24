@@ -17,10 +17,24 @@ export function AuthPage({
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const trimmedEmail = email.trim();
+        const trimmedPassword = password.trim();
+
+        if (!trimmedEmail || !trimmedPassword) {
+            alert("Email and password are required.");
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+            alert("Please enter a valid email address.");
+            return;
+        }
+
         try {
             const response = await axios.post(`${URL}/auth/login`, {
-                email,
-                password,
+                email: trimmedEmail,
+                password: trimmedPassword,
             });
             console.log("Login successful:", response.data);
             const token = response.data.access_token;
@@ -34,16 +48,36 @@ export function AuthPage({
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const trimmedName = name.trim();
+        const trimmedEmail = email.trim();
+        const trimmedPassword = password.trim();
+
+        if (!trimmedName || !trimmedEmail || !trimmedPassword) {
+            alert("Name, email, and password are required.");
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+            alert("Please enter a valid email address.");
+            return;
+        }
+
+        if (trimmedPassword.length < 6) {
+            alert("Password must be at least 6 characters long.");
+            return;
+        }
+
         try {
-            const response = await axios.post(`${URL}/auth/signup`, {
-                name,
-                email,
-                password,
+            const response = await axios.post(`${URL}/auth/register`, {
+                name: trimmedName,
+                email: trimmedEmail,
+                password: trimmedPassword,
             });
-            console.log("Login successful:", response.data);
+            console.log("Signup successful:", response.data);
             navigate("/login");
         } catch (error) {
-            alert(`Signup failed:", ${error}`);
+            alert(`Signup failed: ${error}`);
         }
     };
 
@@ -75,7 +109,7 @@ export function AuthPage({
                         {mode === "login" ? "Sign in to manage your job applications" : "Start tracking your job search today"}
                     </p>
 
-                    <form onSubmit={handleSignup} className="space-y-4">
+                    <form onSubmit={mode === "login" ? handleLogin : handleSignup} className="space-y-4">
                         {mode === "signup" && (
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1.5">Full name</label>
@@ -111,7 +145,7 @@ export function AuthPage({
 
                         <button
                             type="submit"
-                            onClick={handleLogin}
+                            onClick={mode === "login" ? handleLogin : handleSignup}
                             className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all duration-150 shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-0.5 active:translate-y-0 text-sm mt-2"
                         >
                             {mode === "login" ? "Sign in" : "Create account"}
