@@ -3,12 +3,15 @@ import { Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { URL } from "../utils";
+
 export function AuthPage({
     mode,
     onSwitch,
+    onShowToast,
 }: {
     mode: "login" | "signup";
     onSwitch: () => void;
+    onShowToast: (payload: { title: string; description: string; type?: "success" | "error" }) => void;
 }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -22,12 +25,12 @@ export function AuthPage({
         const trimmedPassword = password.trim();
 
         if (!trimmedEmail || !trimmedPassword) {
-            alert("Email and password are required.");
+            onShowToast({ title: "Missing fields", description: "Email and password are required.", type: "error" });
             return;
         }
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-            alert("Please enter a valid email address.");
+            onShowToast({ title: "Invalid email", description: "Please enter a valid email address.", type: "error" });
             return;
         }
 
@@ -40,9 +43,11 @@ export function AuthPage({
             const token = response.data.access_token;
 
             localStorage.setItem("token", token);
+            onShowToast({ title: "Welcome back", description: "You have successfully signed in.", type: "success" });
             navigate("/dashboard");
         } catch (error) {
             console.error("Login failed:", error);
+            onShowToast({ title: "Login failed", description: "Please check your credentials and try again.", type: "error" });
         }
     };
 
@@ -54,17 +59,17 @@ export function AuthPage({
         const trimmedPassword = password.trim();
 
         if (!trimmedName || !trimmedEmail || !trimmedPassword) {
-            alert("Name, email, and password are required.");
+            onShowToast({ title: "Missing fields", description: "Name, email, and password are required.", type: "error" });
             return;
         }
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-            alert("Please enter a valid email address.");
+            onShowToast({ title: "Invalid email", description: "Please enter a valid email address.", type: "error" });
             return;
         }
 
         if (trimmedPassword.length < 6) {
-            alert("Password must be at least 6 characters long.");
+            onShowToast({ title: "Weak password", description: "Password must be at least 6 characters long.", type: "error" });
             return;
         }
 
@@ -75,9 +80,11 @@ export function AuthPage({
                 password: trimmedPassword,
             });
             console.log("Signup successful:", response.data);
+            onShowToast({ title: "Account created", description: "Your account was created successfully. Please sign in.", type: "success" });
             navigate("/login");
+            mode === "signup" && onSwitch(); 
         } catch (error) {
-            alert(`Signup failed: ${error}`);
+            onShowToast({ title: "Signup failed", description: "We could not create your account. Please try again.", type: "error" });
         }
     };
 

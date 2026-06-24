@@ -5,6 +5,7 @@ import { STATUSES, type Job, type Status } from "../types";
 import axios from "axios";
 import { URL } from "../utils";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../App";
 
 export function AddJobPage({
   onCancel,
@@ -23,28 +24,44 @@ export function AddJobPage({
     appliedDate: new Date().toISOString().split("T")[0],
   });
   const navigate = useNavigate();
+  const showToast = useToast();
 
   const set =
     (field: string) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+        setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     try {
-    const submit  = axios.post(`${URL}/applications`, form, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
-    console.log("Job submitted successfully:", submit);
-    navigate("/dashboard");
-  }
+      const submit = axios.post(`${URL}/applications`, form, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      console.log("Job submitted successfully:", submit);
+      showToast({
+
+        title: "Application Added",
+
+        description: `${form.company} - ${form.role} has been added successfully.`,
+
+        type: "success",
+
+      });
+      navigate("/dashboard");
+    }
     catch (error) {
       console.error("Error submitting job:", error);
+      showToast({
+      title: "Failed to Add Application",
+      description: "Something went wrong. Please try again.",
+      type: "error",
+
+    });
     }
-    
+
   };
 
   const inputClass =
