@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import * as Toast from "@radix-ui/react-toast";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthPage } from "./pages/AuthPage";
 import { AddJobPage } from "./pages/AddJobPage";
 import { DashboardPage } from "../app/pages/DashboardPage";
@@ -142,6 +143,7 @@ export default function App() {
             <AppToastProvider>
                 <AppContent />
             </AppToastProvider>
+            <Analytics />
         </Router>
     );
 }
